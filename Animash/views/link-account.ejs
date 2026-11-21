@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <%- include('layout/head') %>
+</head>
+<body class="pb-24 pt-16 md:pt-20 animate-fade">
+    <%- include('layout/navbar') %>
+    <main class="container mx-auto px-4 py-10 max-w-md">
+        <div class="glass-card rounded-3xl p-6 md:p-8">
+            <h1 class="text-2xl font-black text-white mb-1">Tautkan Akun Lama</h1>
+            <p class="text-sm text-zinc-500 mb-6">Email <b class="text-zinc-300"><%= email %></b> sudah dipakai akun lama <b class="text-zinc-300">@<%= legacyUsername %></b>. Masukkan password akun lama untuk menautkannya dengan Google (EXP, riwayat & bookmark tetap utuh).</p>
+            <% if (error) { %><div class="mb-4 text-xs md:text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3"><%= error %></div><% } %>
+            <form method="POST" action="/link-account" class="space-y-4">
+                <input type="hidden" name="action" value="link">
+                <input name="password" type="password" required autocomplete="current-password" placeholder="Password akun lama" class="w-full bg-zinc-800/80 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <button class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 p-3.5 rounded-xl font-bold text-white text-sm">Tautkan &amp; Masuk</button>
+            </form>
+            <form method="POST" action="/link-account" class="mt-4">
+                <input type="hidden" name="action" value="new">
+                <button class="w-full border border-white/10 p-3 rounded-xl text-zinc-300 text-sm">Bukan akun saya — buat akun baru</button>
+            </form>
+        </div>
+    </main>
+</body>
+</html>
