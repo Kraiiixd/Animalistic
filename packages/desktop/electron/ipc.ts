@@ -1,11 +1,9 @@
-import { ipcMain, dialog, Notification, type BrowserWindow } from "electron";
+import { ipcMain, dialog, shell, Notification, type BrowserWindow } from "electron";
 import fs from "node:fs/promises";
 
 // Starter IPC handlers backing window.electronAPI (see preload.ts and
 // packages/web/src/web/lib/desktop.ts). Fully editable — change, remove, or add
 // handlers to fit the app; keep the preload methods and web types in sync.
-// openExternal and onDeepLink come from @runablehq/managed-auth (wired in
-// preload.ts), not from here.
 
 export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
   // Dialog
@@ -26,6 +24,13 @@ export function registerIpcHandlers(getWindow: () => BrowserWindow | null) {
 
   ipcMain.handle("fs:write", async (_, filePath: string, data: string) => {
     await fs.writeFile(filePath, data, "utf-8");
+  });
+
+  // Shell — hanya http(s)
+  ipcMain.handle("shell:openExternal", async (_, url: string) => {
+    const u = new URL(url);
+    if (u.protocol !== "http:" && u.protocol !== "https:") throw new Error("Hanya http(s) yang didukung");
+    await shell.openExternal(u.toString());
   });
 
   // Notifications

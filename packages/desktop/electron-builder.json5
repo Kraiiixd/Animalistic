@@ -8,15 +8,6 @@
     output: "release/${version}",
   },
   files: ["dist", "dist-electron"],
-  // PLACEHOLDER — packaged-build deep links (and desktop managed sign-in) DO NOT WORK until this
-  // scheme is replaced with the app's real `runable-<applicationId>` (the value main.ts derives at
-  // runtime from APPLICATION_ID). Dev builds register the protocol at runtime and ignore this.
-  protocols: [
-    {
-      name: "App deep links",
-      schemes: ["runable-app"],
-    },
-  ],
   mac: {
     target: ["dmg"],
     artifactName: "${productName}-Mac-${version}-Installer.${ext}",
