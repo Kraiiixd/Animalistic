@@ -1,14 +1,14 @@
-import { sqliteTable, text, integer, real, primaryKey, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, serial, boolean, real, timestamp, primaryKey, uniqueIndex } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
 export * from "./auth-schema";
 
-const createdAt = integer("created_at", { mode: "timestamp" })
+const createdAt = timestamp("created_at", { mode: "date", withTimezone: true, precision: 3 })
   .notNull()
   .$defaultFn(() => new Date());
 
 // ---- Profil & gamifikasi -------------------------------------------------
-export const profile = sqliteTable("profile", {
+export const profile = pgTable("profile", {
   userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
   username: text("username").notNull().unique(),
   // Nomor akun berurutan (#1, #2, ...). Diisi saat profil dibuat.
@@ -22,14 +22,14 @@ export const profile = sqliteTable("profile", {
   totalXp: integer("total_xp").notNull().default(0),
   level: integer("level").notNull().default(1),
   xpIntoLevel: integer("xp_into_level").notNull().default(0),
-  lastSeenAt: integer("last_seen_at", { mode: "timestamp" }),
+  lastSeenAt: timestamp("last_seen_at", { mode: "date", withTimezone: true, precision: 3 }),
   createdAt,
 });
 
-export const xpLog = sqliteTable(
+export const xpLog = pgTable(
   "xp_log",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
     amount: integer("amount").notNull(),
     reason: text("reason").notNull(),
@@ -41,24 +41,24 @@ export const xpLog = sqliteTable(
 );
 
 // ---- Katalog anime --------------------------------------------------------
-export const genre = sqliteTable("genre", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const genre = pgTable("genre", {
+  id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
 });
 
-export const studio = sqliteTable("studio", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const studio = pgTable("studio", {
+  id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
 });
 
-export const anime = sqliteTable("anime", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const anime = pgTable("anime", {
+  id: serial("id").primaryKey(),
   slug: text("slug").notNull().unique(),
   // ID di AniList, sumber metadata utama. Null = data lama/manual.
   anilistId: integer("anilist_id").unique(),
   trailerId: text("trailer_id"),
   nextAiringEpisode: integer("next_airing_episode"),
-  nextAiringAt: integer("next_airing_at", { mode: "timestamp" }),
+  nextAiringAt: timestamp("next_airing_at", { mode: "date", withTimezone: true, precision: 3 }),
   title: text("title").notNull(),
   altTitle: text("alt_title").notNull().default(""),
   synopsis: text("synopsis").notNull().default(""),
@@ -76,13 +76,13 @@ export const anime = sqliteTable("anime", {
   // Jadwal rilis mingguan (0 = Minggu ... 6 = Sabtu), jam tayang "HH:mm" WIB
   airDay: integer("air_day"),
   airTime: text("air_time"),
-  featured: integer("featured", { mode: "boolean" }).notNull().default(false),
+  featured: boolean("featured").notNull().default(false),
   trending: integer("trending").notNull().default(0),
   popularity: integer("popularity").notNull().default(0),
   createdAt,
 });
 
-export const animeGenre = sqliteTable(
+export const animeGenre = pgTable(
   "anime_genre",
   {
     animeId: integer("anime_id").notNull().references(() => anime.id, { onDelete: "cascade" }),
@@ -91,15 +91,15 @@ export const animeGenre = sqliteTable(
   (t) => [primaryKey({ columns: [t.animeId, t.genreId] })],
 );
 
-export const episode = sqliteTable(
+export const episode = pgTable(
   "episode",
   {
-    id: integer("id").primaryKey({ autoIncrement: true }),
+    id: serial("id").primaryKey(),
     animeId: integer("anime_id").notNull().references(() => anime.id, { onDelete: "cascade" }),
     number: integer("number").notNull(),
     title: text("title").notNull().default(""),
     duration: integer("duration").notNull().default(1420), // detik
-    airedAt: integer("aired_at", { mode: "timestamp" }),
+    airedAt: timestamp("aired_at", { mode: "date", withTimezone: true, precision: 3 }),
     // Sumber video diatur admin. Kosong = belum tersedia.
     videoUrl: text("video_url"),
     // Iframe pemutar dari sumber pihak ketiga (diisi lewat admin.setEpisodeEmbed). Dipakai jika videoUrl kosong.
@@ -111,7 +111,7 @@ export const episode = sqliteTable(
 );
 
 // ---- Library & progres pengguna ------------------------------------------
-export const watchlist = sqliteTable(
+export const watchlist = pgTable(
   "watchlist",
   {
     userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
@@ -120,30 +120,30 @@ export const watchlist = sqliteTable(
     status: text("status", { enum: ["watching", "completed", "plan", "dropped", "paused"] })
       .notNull()
       .default("plan"),
-    favorite: integer("favorite", { mode: "boolean" }).notNull().default(false),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
+    favorite: boolean("favorite").notNull().default(false),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true, precision: 3 })
       .notNull()
       .$defaultFn(() => new Date()),
   },
   (t) => [primaryKey({ columns: [t.userId, t.animeId] })],
 );
 
-export const watchProgress = sqliteTable(
+export const watchProgress = pgTable(
   "watch_progress",
   {
     userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
     episodeId: integer("episode_id").notNull().references(() => episode.id, { onDelete: "cascade" }),
     seconds: real("seconds").notNull().default(0),
-    completed: integer("completed", { mode: "boolean" }).notNull().default(false),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
+    completed: boolean("completed").notNull().default(false),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true, precision: 3 })
       .notNull()
       .$defaultFn(() => new Date()),
   },
   (t) => [primaryKey({ columns: [t.userId, t.episodeId] })],
 );
 
-export const donation = sqliteTable("donation", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const donation = pgTable("donation", {
+  id: serial("id").primaryKey(),
   userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
   amount: integer("amount").notNull(),
   currency: text("currency").notNull().default("IDR"),
@@ -151,8 +151,8 @@ export const donation = sqliteTable("donation", {
   createdAt,
 });
 
-export const auditLog = sqliteTable("audit_log", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const auditLog = pgTable("audit_log", {
+  id: serial("id").primaryKey(),
   actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
   action: text("action").notNull(),
   detail: text("detail").notNull().default(""),

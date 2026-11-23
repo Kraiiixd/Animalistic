@@ -38,6 +38,12 @@ export default function Login() {
   const social = async (provider: "google" | "apple" | "microsoft") => {
     setError(null);
     try {
+      if (provider === "google") {
+        // Google OAuth langsung dari Better Auth (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET).
+        const res = await authClient.signIn.social({ provider: "google", callbackURL: "/profil" });
+        if (res.error) setError(res.error.message ?? "Gagal masuk dengan Google");
+        return;
+      }
       await authClient.managedAuth.signIn({ provider });
       done();
     } catch (err) {

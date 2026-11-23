@@ -12,17 +12,17 @@ import { ensureProfile } from "../lib/profile";
 async function statsFor(userId: string) {
   const [w] = await db
     .select({
-      watching: sql<number>`sum(case when ${watchlist.status} = 'watching' then 1 else 0 end)`,
-      completed: sql<number>`sum(case when ${watchlist.status} = 'completed' then 1 else 0 end)`,
-      favorites: sql<number>`sum(case when ${watchlist.favorite} = 1 then 1 else 0 end)`,
+      watching: sql<number>`sum(case when ${watchlist.status} = 'watching' then 1 else 0 end)`.mapWith(Number),
+      completed: sql<number>`sum(case when ${watchlist.status} = 'completed' then 1 else 0 end)`.mapWith(Number),
+      favorites: sql<number>`sum(case when ${watchlist.favorite} = true then 1 else 0 end)`.mapWith(Number),
       total: count(),
     })
     .from(watchlist)
     .where(eq(watchlist.userId, userId));
   const [p] = await db
     .select({
-      episodes: sql<number>`sum(case when ${watchProgress.completed} = 1 then 1 else 0 end)`,
-      seconds: sum(watchProgress.seconds),
+      episodes: sql<number>`sum(case when ${watchProgress.completed} = true then 1 else 0 end)`.mapWith(Number),
+      seconds: sum(watchProgress.seconds).mapWith(Number),
     })
     .from(watchProgress)
     .where(eq(watchProgress.userId, userId));

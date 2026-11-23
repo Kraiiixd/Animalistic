@@ -7,8 +7,14 @@ import { db } from "./database";
 export const auth = betterAuth({
   basePath: "/api/auth",
   baseURL: process.env.WEBSITE_URL,
-  database: drizzleAdapter(db, { provider: "sqlite" }),
+  database: drizzleAdapter(db, { provider: "pg" }),
   emailAndPassword: { enabled: true },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
+  },
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: (request) => {
     const origin = request?.headers.get("origin");

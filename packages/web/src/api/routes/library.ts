@@ -155,11 +155,11 @@ export const library = {
         const [a] = await db.select().from(anime).where(eq(anime.id, ep.animeId));
         if (a && a.status === "completed") {
           const [{ total }] = await db
-            .select({ total: sql<number>`count(*)` })
+            .select({ total: sql<number>`count(*)`.mapWith(Number) })
             .from(episode)
             .where(eq(episode.animeId, a.id));
           const [{ done }] = await db
-            .select({ done: sql<number>`count(*)` })
+            .select({ done: sql<number>`count(*)`.mapWith(Number) })
             .from(watchProgress)
             .innerJoin(episode, eq(episode.id, watchProgress.episodeId))
             .where(
@@ -190,7 +190,7 @@ export const library = {
     const myIds = mine.map((m) => m.animeId);
     const weights = myIds.length
       ? await db
-          .select({ name: genre.name, n: sql<number>`count(*)` })
+          .select({ name: genre.name, n: sql<number>`count(*)`.mapWith(Number) })
           .from(animeGenre)
           .innerJoin(genre, eq(genre.id, animeGenre.genreId))
           .where(inArray(animeGenre.animeId, myIds))
