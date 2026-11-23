@@ -7,7 +7,7 @@ export const auth = betterAuth({
   basePath: "/api/auth",
   baseURL: process.env.WEBSITE_URL,
   database: drizzleAdapter(db, { provider: "pg" }),
-  emailAndPassword: { enabled: false },
+  emailAndPassword: { enabled: true, autoSignIn: true },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
