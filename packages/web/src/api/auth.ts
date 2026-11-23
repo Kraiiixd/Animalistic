@@ -1,14 +1,13 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { expo } from "@better-auth/expo";
-import { runableManagedAuth } from "@runablehq/managed-auth/server";
 import { db } from "./database";
 
 export const auth = betterAuth({
   basePath: "/api/auth",
   baseURL: process.env.WEBSITE_URL,
   database: drizzleAdapter(db, { provider: "pg" }),
-  emailAndPassword: { enabled: true },
+  emailAndPassword: { enabled: false },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -20,11 +19,5 @@ export const auth = betterAuth({
     const origin = request?.headers.get("origin");
     return origin ? [origin] : ["*"];
   },
-  plugins: [
-    ...runableManagedAuth({
-      applicationId: process.env.APPLICATION_ID!,
-      issuer: process.env.VITE_RUNABLE_AUTH_ISSUER!,
-    }),
-    expo(),
-  ],
+  plugins: [expo()],
 });

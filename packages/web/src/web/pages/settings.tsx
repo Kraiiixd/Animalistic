@@ -8,7 +8,6 @@ export default function Settings() {
   const user = session.data?.user;
 
   const signOut = async () => {
-    authClient.managedAuth.clearToken();
     await authClient.signOut();
     window.location.assign("/login");
   };
