@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Maximize, Minimize, Play, Pause, RectangleHorizontal, SkipForward, Bookmark, Volume2, VolumeX } from "lucide-react";
 import { Shell } from "../components/app/shell";
 import { EmptyState, ErrorState, Skeleton, errorText } from "../components/app/states";
 import { useAnimeDetail } from "../queries/anime";
+import { useMyProfile } from "../queries/profile";
 import { client } from "../lib/api";
 import { authClient } from "../lib/auth";
 import { formatClock } from "../lib/format";
@@ -38,6 +39,8 @@ export default function Watch() {
   const episode = detail.data?.episodes.find((e) => e.number === epNumber);
   const session = authClient.useSession();
   const signedIn = !!session.data;
+  const me = useMyProfile(signedIn);
+  const isAdmin = me.data?.role === "admin" || me.data?.role === "developer";
 
   const playback = useQuery({
     queryKey: ["playback", episode?.id],
@@ -113,6 +116,7 @@ export default function Watch() {
               )}
             </div>
           </div>
+          {isAdmin && <AnimeinButton episodeId={episode.id} />}
           <p className="text-sm text-muted-foreground">
             Sumber video ini adalah video demo. Ganti lewat panel admin saat katalog asli siap.
           </p>
@@ -139,6 +143,29 @@ export default function Watch() {
         </aside>
       </div>
     </Shell>
+  );
+}
+
+/** Tombol admin: isi videoUrl episode dari MP4 AnimeIn (kualitas tertinggi). */
+function AnimeinButton({ episodeId }: { episodeId: number }) {
+  const qc = useQueryClient();
+  const run = useMutation({
+    mutationFn: () => client.admin.setEpisodeAnimein({ episodeId }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["playback", episodeId] }),
+  });
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border p-3 text-sm">
+      <button
+        type="button"
+        onClick={() => run.mutate()}
+        disabled={run.isPending}
+        className="rounded-full bg-maroon px-3 py-1.5 font-semibold hover:bg-maroon-glow disabled:opacity-50"
+      >
+        {run.isPending ? "Mengambil..." : "Ambil MP4 AnimeIn"}
+      </button>
+      {run.isSuccess && <span className="text-muted-foreground">Berhasil, sumber {run.data.quality}p tersimpan.</span>}
+      {run.isError && <span role="alert" className="text-maroon-glow">{errorText(run.error)}</span>}
+    </div>
   );
 }
 

@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db } from "../database";
-import { auditLog, episode, profile } from "../database/schema";
+import { anime, auditLog, episode, profile } from "../database/schema";
 import { adminOnly, authed } from "../middleware/auth";
 import { fetchAnoboyServers } from "../lib/anoboy";
+import { findAnimeinSources, pickBestMp4 } from "../lib/animein";
 
 const roles = ["user", "beta", "premium", "moderator", "admin", "developer"] as const;
 
@@ -44,6 +45,27 @@ export const admin = {
         detail: `episode ${input.episodeId}`,
       });
       return { ok: true };
+    }),
+
+  /** Mencari MP4 AnimeIn untuk episode (judul anime dicocokkan, kualitas tertinggi dipakai). Tercatat di audit log. */
+  setEpisodeAnimein: adminOnly
+    .input(z.object({ episodeId: z.number().int() }))
+    .handler(async ({ input, context }) => {
+      const [row] = await db
+        .select({ title: anime.title, number: episode.number })
+        .from(episode)
+        .innerJoin(anime, eq(anime.id, episode.animeId))
+        .where(eq(episode.id, input.episodeId));
+      if (!row) throw new Error("Episode tidak ditemukan");
+      const best = pickBestMp4(await findAnimeinSources(row.title, row.number));
+      if (!best) throw new Error("Tidak ada MP4 AnimeIn yang cocok untuk episode ini");
+      await db.update(episode).set({ videoUrl: best.url }).where(eq(episode.id, input.episodeId));
+      await db.insert(auditLog).values({
+        actorId: context.user.id,
+        action: "episode.animein",
+        detail: `episode ${input.episodeId} <- ${best.quality}p`,
+      });
+      return { ok: true, quality: best.quality };
     }),
 
   /** Mengambil iframe pemutar dari halaman episode Anoboy (hanya host anoboy.be). Tercatat di audit log. */
