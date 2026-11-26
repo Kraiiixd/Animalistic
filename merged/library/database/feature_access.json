@@ -1,0 +1,13 @@
+{
+  "features": {
+    "jadibot": "premium",
+    "bataljadibot": "owner",
+    "stopjadibot": "owner",
+    "listjadibot": "owner",
+    "viu": "premium"
+  },
+  "grantedUsers": {
+    "testreq": []
+  },
+  "pendingRequests": {}
+}
